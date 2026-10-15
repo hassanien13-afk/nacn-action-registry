@@ -50,6 +50,7 @@ body{margin:0;-webkit-text-size-adjust:100%}
 .dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 32px));background:var(--surface);border-radius:10px;box-shadow:var(--shadow);z-index:21;border:1px solid var(--line)}
 .dialog .dbody{gap:14px}
 .hint{font-size:12.5px;color:var(--ink-3);margin:0}
+.hint a{color:var(--accent);font-weight:600}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
 .wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -245,7 +246,7 @@ tbody tr.is-done{color:var(--ink-2)}
       <button class="btn" id="exportBtn" type="button">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Export CSV</button>
       <button class="btn primary" id="addBtn" type="button">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>New action</button>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Add / edit in Google Sheet</button>
     </div>
 
     <section class="tablecard">
@@ -262,7 +263,7 @@ tbody tr.is-done{color:var(--ink-2)}
     <div class="foot">
       <span id="liveState">Connecting to the registry…</span>
       <span>Overdue = due date passed and status not Complete.</span>
-      <span>Click any row to view it. Editing needs the team passcode.</span>
+      <span>Click any row for full details. Add and edit actions in the linked Google Sheet; changes appear here within 30 s.</span>
     </div>
   </div>
 </main>

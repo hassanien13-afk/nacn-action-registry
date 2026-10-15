@@ -1,9 +1,11 @@
 /* DrasChem NaCN Production Facility Action Registry — standalone portal (GitHub Pages + Google Sheets API) */
 (function(){
-  const API_URL = window.REGISTRY_API_URL || "";
+  const SHEET_ID = window.REGISTRY_SHEET_ID || "";
+  const API_URL = SHEET_ID; // truthy when configured
+  const SHEET_URL = "https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/edit";
   const REGS = [
-    { key:"tri", label:"DrasChem – EPC-E – COSMOS-E", short:"Tri-party", prefix:"T", parties:["DrasChem","EPC-E","COSMOS-E"] },
-    { key:"duo", label:"DrasChem – COSMOS-E", short:"Client-Designer", prefix:"C", parties:["DrasChem","COSMOS-E"] }
+    { key:"tri", sheet:"DrasChem-EPC-E-COSMOS-E", label:"DrasChem – EPC-E – COSMOS-E", short:"Tri-party", prefix:"T", parties:["DrasChem","EPC-E","COSMOS-E"] },
+    { key:"duo", sheet:"DrasChem-COSMOS-E", label:"DrasChem – COSMOS-E", short:"Client-Designer", prefix:"C", parties:["DrasChem","COSMOS-E"] }
   ];
   const STATUSES = ["Not Started","In Progress","On Hold","Complete"];
   const ST_CLASS = {"Not Started":"st-notstarted","In Progress":"st-progress","On Hold":"st-hold","Complete":"st-complete"};
@@ -26,7 +28,7 @@
   const $ = id => document.getElementById(id);
   const reg = () => REGS.find(r => r.key === state.tab);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const canEdit = () => !!state.passcode;
+  const canEdit = () => false; // edits happen in the Google Sheet
 
   function todayISO(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function fmtDate(iso){ if(!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso||""; const [y,m,d]=iso.split("-"); return d+" "+MON[+m-1]+" "+y; }
@@ -51,25 +53,58 @@
   const codeFor = (R,r) => R.prefix+"-"+String(r.no||0).padStart(3,"0");
   const code = r => codeFor(reg(), r);
 
-  /* ---------- API ---------- */
-  async function apiGet(){
-    const res = await fetch(API_URL, { cache:"no-store" });
-    const j = await res.json();
-    if (!j.ok) throw new Error(j.error||"load_failed");
-    return j.data;
+  /* ---------- Google Sheet (gviz JSONP) ---------- */
+  let cbSeq=0;
+  function gviz(sheet){
+    return new Promise((resolve,reject)=>{
+      const cb="__gviz"+(++cbSeq), s=document.createElement("script");
+      const done=()=>{ delete window[cb]; s.remove(); clearTimeout(timer); };
+      const timer=setTimeout(()=>{ done(); reject(new Error("timeout")); },15000);
+      window[cb]=resp=>{ done(); resp && resp.status!=="error" ? resolve(resp.table) : reject(new Error("sheet_error")); };
+      s.onerror=()=>{ done(); reject(new Error("network")); };
+      s.src="https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?headers=1&sheet="+encodeURIComponent(sheet)+"&tqx="+encodeURIComponent("out:json;responseHandler:"+cb)+"&_="+Date.now();
+      document.head.appendChild(s);
+    });
   }
-  async function apiPost(payload){
-    const res = await fetch(API_URL, { method:"POST", body: JSON.stringify(payload) }); // text/plain: no CORS preflight
-    return res.json();
+  function cellDate(c){
+    if (!c || c.v==null || c.v==="") return "";
+    const v=c.v;
+    if (typeof v==="string"){
+      let m=v.match(/^Date\((\d+),(\d+),(\d+)/); if (m) return m[1]+"-"+String(+m[2]+1).padStart(2,"0")+"-"+String(m[3]).padStart(2,"0");
+      m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+      m=v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/); if (m) return m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0");
+      const d=new Date(v); if(!isNaN(d)) return d.toISOString().slice(0,10);
+    }
+    return "";
   }
-  function applyData(d){
-    state.rows.tri = d.tri||[]; state.rows.duo = d.duo||[];
-    state.loaded = true; state.error = null; state.lastSync = new Date();
+  const cellText = c => (c && c.v!=null) ? String(c.f!=null && typeof c.v!=="string" && typeof c.v!=="number" ? c.f : c.v).trim() : "";
+  function normStatus(s){
+    const t=(s||"").toLowerCase().replace(/\s+/g," ").trim();
+    if (!t) return "Not Started";
+    if (t.startsWith("complete")||t==="done"||t==="closed") return "Complete";
+    if (t.includes("process")||t.includes("progress")) return "In Progress";
+    if (t.includes("hold")) return "On Hold";
+    return "Not Started";
+  }
+  function normParty(p){
+    const t=(p||"").trim(); const u=t.toUpperCase().replace(/\s/g,"");
+    if (u.startsWith("COSMOS")) return "COSMOS-E"; if (u.startsWith("EPC")) return "EPC-E"; if (u.startsWith("DRAS")) return "DrasChem"; return t;
+  }
+  function parseTable(R,tbl){
+    return (tbl.rows||[]).map((row,i)=>{
+      const c=row.c||[];
+      return { id:R.key+"-r"+(i+2), sheetRow:i+2, no: Number(c[0]&&c[0].v)||i+1, action:cellText(c[1]), issued:cellDate(c[2]),
+        from:normParty(cellText(c[3])), to:normParty(cellText(c[4])), responsible:cellText(c[5]), due:cellDate(c[6]),
+        status:normStatus(cellText(c[7])), remarks:cellText(c[8]) };
+    }).filter(r=>r.action);
   }
   async function refresh(){
-    if (!API_URL || state.busy) return;
-    try { applyData(await apiGet()); }
-    catch(e){ state.error = "Couldn't reach the registry. Retrying shortly."; }
+    if (!SHEET_ID) return;
+    try{
+      const [t1,t2]=await Promise.all(REGS.map(R=>gviz(R.sheet)));
+      state.rows.tri=parseTable(REGS[0],t1); state.rows.duo=parseTable(REGS[1],t2);
+      state.loaded=true; state.error=null; state.lastSync=new Date();
+    }catch(e){ state.error = state.loaded ? "Couldn't refresh from the Google Sheet. Retrying shortly." : "The Google Sheet isn't reachable. It must be shared as “Anyone with the link”."; }
     if ($("drawer").hidden) render(); else { renderTabs(); renderKpis(); renderRows(); }
     renderLive();
   }
@@ -117,8 +152,8 @@
     $("statusSeg").innerHTML = opts.map(([v,l])=>`<button type="button" data-st="${v}" aria-pressed="${state.status===v}">${l}</button>`).join("");
     const ps = reg().parties; if (state.party!=="all" && !ps.includes(state.party)) state.party="all";
     $("partyFilter").innerHTML = `<option value="all">All parties</option>`+ps.map(p=>`<option value="${p}" ${state.party===p?"selected":""}>Involves ${p}</option>`).join("");
-    $("addBtn").hidden = !canEdit() || !API_URL;
-    $("lockBtn").hidden = !API_URL;
+    $("addBtn").hidden = !SHEET_ID;
+    $("lockBtn").hidden = true;
     $("lockBtn").innerHTML = canEdit()
       ? `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015-.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Editing as ${esc(state.name||"team member")}`
       : `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" stroke-width="1.5"/></svg>Unlock editing`;
@@ -133,9 +168,9 @@
   function showEmpty(html){ $("empty").hidden=false; $("empty").innerHTML=html; $("tbody").innerHTML=""; $("cards").innerHTML=""; }
   function renderRows(){
     const rows=filtered(), all=state.rows[state.tab];
-    if (!API_URL) return showEmpty(`<h3>Registry not connected yet</h3><p>The Google Sheet backend hasn't been linked to this page.</p>`);
+    if (!SHEET_ID) return showEmpty(`<h3>Registry not connected yet</h3><p>No Google Sheet is linked to this page.</p>`);
     if (!state.loaded) return showEmpty(state.error?`<h3>Can't reach the registry</h3><p>${esc(state.error)}</p>`:`<h3>Loading the register…</h3><p>Fetching the latest actions.</p>`);
-    if (!all.length) return showEmpty(`<h3>No actions logged yet</h3><p>Unlock editing, then use <b>New action</b> to record the first request.</p>`);
+    if (!all.length) return showEmpty(`<h3>No actions logged yet</h3><p>Use <b>Add / edit in Google Sheet</b> to record the first request.</p>`);
     if (!rows.length) return showEmpty(`<h3>No actions match</h3><p>Try clearing the search or switching the filter to <b>All</b>.</p>`);
     $("empty").hidden=true;
     $("tbody").innerHTML = rows.map(r=>{
@@ -162,7 +197,7 @@
     const el=$("liveState");
     if (!API_URL){ el.textContent="Not connected to the Google Sheet yet."; return; }
     if (state.error && state.loaded){ el.innerHTML=`<i class="dot" style="background:var(--warn);margin-right:6px"></i>${esc(state.error)}`; return; }
-    if (state.lastSync) el.innerHTML=`<i class="dot" style="background:var(--ok);margin-right:6px"></i>Synced ${state.lastSync.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} · refreshes every 30 s`;
+    if (state.lastSync) el.innerHTML=`<i class="dot" style="background:var(--ok);margin-right:6px"></i>Synced from Google Sheet ${state.lastSync.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} · refreshes every 30 s`;
   }
   function render(){ renderTabs(); renderKpis(); renderToolbar(); renderHead(); renderRows(); renderLive(); }
 
@@ -203,6 +238,7 @@
     state.editing = row ? row.id : null;
     $("dEyebrow").textContent = R.label+" Action Registry";
     $("dTitle").textContent = row ? code(row) : "New action";
+    $("cancelBtn").textContent = "Close";
     $("f_action").value = row?.action||"";
     fillSelect($("f_from"),R.parties,row?.from||"COSMOS-E");
     fillSelect($("f_to"),R.parties,row?.to||"DrasChem");
@@ -217,7 +253,10 @@
     $("delBtn").hidden=!row || ro; $("delConfirm").hidden=true; $("formErr").hidden=true;
     ["f_action","f_from","f_to","f_resp","f_issued","f_due","f_status","f_remarks"].forEach(i=>$(i).disabled=ro);
     $("saveBtn").hidden=ro;
-    $("roNote").hidden=!ro;
+    $("roNote").hidden=false;
+    $("roNote").innerHTML = row
+      ? `To change this action, edit row <b>${row.sheetRow}</b> on the <b>${esc(R.sheet)}</b> tab of the <a href="${SHEET_URL}" target="_blank" rel="noopener">Google Sheet</a>.`
+      : `New actions are added as a new row on the <b>${esc(R.sheet)}</b> tab of the <a href="${SHEET_URL}" target="_blank" rel="noopener">Google Sheet</a>.`;
     const a=$("audit");
     if (row && row.updatedAt){
       a.hidden=false;
@@ -239,6 +278,7 @@
 
   async function save(e){
     e.preventDefault();
+    if (!canEdit()) return;
     const action=$("f_action").value.trim();
     if (!action){ $("formErr").textContent="Describe the request or action before saving."; $("formErr").hidden=false; return; }
     const row={ id:state.editing||"", action, from:$("f_from").value, to:$("f_to").value, responsible:$("f_resp").value.trim(),
@@ -283,7 +323,7 @@
   function rowOpen(e){ const el=e.target.closest("[data-id]"); if(!el) return; const r=state.rows[state.tab].find(x=>x.id===el.dataset.id); if(r) openDrawer(r); }
   $("tbody").addEventListener("click",rowOpen); $("cards").addEventListener("click",rowOpen);
   [$("tbody"),$("cards")].forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter") rowOpen(e); }));
-  $("addBtn").addEventListener("click",()=>openDrawer(null));
+  $("addBtn").addEventListener("click",()=>{ window.open(SHEET_URL,"_blank","noopener"); });
   $("exportBtn").addEventListener("click",exportCsv);
   $("lockBtn").addEventListener("click",openUnlock);
   $("uForm").addEventListener("submit",doUnlock);
