@@ -281,7 +281,7 @@
     fillSelect($("f_from"),R.parties,row?.from||"COSMOS-E");
     fillSelect($("f_to"),R.parties,row?.to||"DrasChem");
     $("f_resp").value=row?.responsible||"";
-    const resp=[...new Set(state.rows[state.tab].map(r=>r.responsible).filter(Boolean).concat(R.parties))];
+    const resp=R.parties; // companies only; any name can still be typed
     $("respList").innerHTML=resp.map(x=>`<option value="${esc(x)}">`).join("");
     $("f_issued").value=row?.issued||todayISO();
     $("f_due").value=row?.due||"";
