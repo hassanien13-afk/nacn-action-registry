@@ -1,7 +1,7 @@
 /* DrasChem NaCN Production Facility Action Registry — standalone portal (GitHub Pages + Google Sheets API) */
 (function(){
   const SHEET_ID = window.REGISTRY_SHEET_ID || "";
-  const API_URL = SHEET_ID; // truthy when configured
+  const API_URL = window.REGISTRY_API_URL || ""; // Apps Script web app: enables editing in the portal
   const SHEET_URL = "https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/edit";
   const REGS = [
     { key:"tri", sheet:"DrasChem-EPC-E-COSMOS-E", label:"DrasChem – EPC-E – COSMOS-E", short:"Tri-party", prefix:"T", parties:["DrasChem","EPC-E","COSMOS-E"] },
@@ -28,7 +28,7 @@
   const $ = id => document.getElementById(id);
   const reg = () => REGS.find(r => r.key === state.tab);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const canEdit = () => false; // edits happen in the Google Sheet
+  const canEdit = () => !!API_URL && !!state.passcode;
 
   function todayISO(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function fmtDate(iso){ if(!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso||""; const [y,m,d]=iso.split("-"); return d+" "+MON[+m-1]+" "+y; }
@@ -98,12 +98,34 @@
         status:normStatus(cellText(c[7])), remarks:cellText(c[8]) };
     }).filter(r=>r.action);
   }
+  /* ---------- Apps Script API (read + write) ---------- */
+  async function apiGet(){
+    const res = await fetch(API_URL, { cache:"no-store" });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error||"load_failed");
+    return j.data;
+  }
+  async function apiPost(payload){
+    const res = await fetch(API_URL, { method:"POST", body: JSON.stringify(payload) }); // text/plain: no CORS preflight
+    return res.json();
+  }
+  function fromApi(R,list){
+    return (list||[]).map(r=>({ ...r, id:R.key+"-"+r.no, status:normStatus(r.status), from:normParty(r.from), to:normParty(r.to) })).filter(r=>r.action);
+  }
+  function applyData(d){
+    state.rows.tri=fromApi(REGS[0],d.tri); state.rows.duo=fromApi(REGS[1],d.duo);
+    state.loaded=true; state.error=null; state.lastSync=new Date();
+  }
   async function refresh(){
-    if (!SHEET_ID) return;
+    if (!SHEET_ID && !API_URL) return;
+    if (state.busy) return;
     try{
-      const [t1,t2]=await Promise.all(REGS.map(R=>gviz(R.sheet)));
-      state.rows.tri=parseTable(REGS[0],t1); state.rows.duo=parseTable(REGS[1],t2);
-      state.loaded=true; state.error=null; state.lastSync=new Date();
+      if (API_URL){ applyData(await apiGet()); }
+      else {
+        const [t1,t2]=await Promise.all(REGS.map(R=>gviz(R.sheet)));
+        state.rows.tri=parseTable(REGS[0],t1); state.rows.duo=parseTable(REGS[1],t2);
+        state.loaded=true; state.error=null; state.lastSync=new Date();
+      }
     }catch(e){ state.error = state.loaded ? "Couldn't refresh from the Google Sheet. Retrying shortly." : "The Google Sheet isn't reachable. It must be shared as “Anyone with the link”."; }
     if ($("drawer").hidden) render(); else { renderTabs(); renderKpis(); renderRows(); }
     renderLive();
@@ -152,8 +174,9 @@
     $("statusSeg").innerHTML = opts.map(([v,l])=>`<button type="button" data-st="${v}" aria-pressed="${state.status===v}">${l}</button>`).join("");
     const ps = reg().parties; if (state.party!=="all" && !ps.includes(state.party)) state.party="all";
     $("partyFilter").innerHTML = `<option value="all">All parties</option>`+ps.map(p=>`<option value="${p}" ${state.party===p?"selected":""}>Involves ${p}</option>`).join("");
-    $("addBtn").hidden = !SHEET_ID;
-    $("lockBtn").hidden = true;
+    $("addBtn").hidden = API_URL ? !canEdit() : !SHEET_ID;
+    $("addBtn").lastChild.textContent = API_URL ? "New action" : "Add / edit in Google Sheet";
+    $("lockBtn").hidden = !API_URL;
     $("lockBtn").innerHTML = canEdit()
       ? `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015-.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Editing as ${esc(state.name||"team member")}`
       : `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" stroke-width="1.5"/></svg>Unlock editing`;
@@ -197,9 +220,14 @@
     const el=$("liveState");
     if (!API_URL){ el.textContent="Not connected to the Google Sheet yet."; return; }
     if (state.error && state.loaded){ el.innerHTML=`<i class="dot" style="background:var(--warn);margin-right:6px"></i>${esc(state.error)}`; return; }
-    if (state.lastSync) el.innerHTML=`<i class="dot" style="background:var(--ok);margin-right:6px"></i>Synced from Google Sheet ${state.lastSync.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} · refreshes every 30 s`;
+    if (state.lastSync) el.innerHTML=`<i class="dot" style="background:var(--ok);margin-right:6px"></i>Synced ${state.lastSync.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} · refreshes every 30 s`;
   }
-  function render(){ renderTabs(); renderKpis(); renderToolbar(); renderHead(); renderRows(); renderLive(); }
+  function renderHow(){
+    $("howTo").textContent = API_URL
+      ? (canEdit() ? "Click any row to edit it. Changes are saved for everyone." : "Click any row for full details. Unlock editing with the team passcode to add or change actions.")
+      : "Click any row for full details. Add and edit actions in the linked Google Sheet.";
+  }
+  function render(){ renderHow(); renderTabs(); renderKpis(); renderToolbar(); renderHead(); renderRows(); renderLive(); }
 
   /* ---------- unlock dialog ---------- */
   function openUnlock(){
@@ -238,7 +266,7 @@
     state.editing = row ? row.id : null;
     $("dEyebrow").textContent = R.label+" Action Registry";
     $("dTitle").textContent = row ? code(row) : "New action";
-    $("cancelBtn").textContent = "Close";
+    $("cancelBtn").textContent = canEdit() ? "Cancel" : "Close";
     $("f_action").value = row?.action||"";
     fillSelect($("f_from"),R.parties,row?.from||"COSMOS-E");
     fillSelect($("f_to"),R.parties,row?.to||"DrasChem");
@@ -253,8 +281,9 @@
     $("delBtn").hidden=!row || ro; $("delConfirm").hidden=true; $("formErr").hidden=true;
     ["f_action","f_from","f_to","f_resp","f_issued","f_due","f_status","f_remarks"].forEach(i=>$(i).disabled=ro);
     $("saveBtn").hidden=ro;
-    $("roNote").hidden=false;
-    $("roNote").innerHTML = row
+    $("roNote").hidden = API_URL ? !ro : false;
+    if (API_URL) $("roNote").innerHTML = `View only. Use <b>Unlock editing</b> with the team passcode to change this action.`;
+    else $("roNote").innerHTML = row
       ? `To change this action, edit row <b>${row.sheetRow}</b> on the <b>${esc(R.sheet)}</b> tab of the <a href="${SHEET_URL}" target="_blank" rel="noopener">Google Sheet</a>.`
       : `New actions are added as a new row on the <b>${esc(R.sheet)}</b> tab of the <a href="${SHEET_URL}" target="_blank" rel="noopener">Google Sheet</a>.`;
     const a=$("audit");
@@ -281,7 +310,8 @@
     if (!canEdit()) return;
     const action=$("f_action").value.trim();
     if (!action){ $("formErr").textContent="Describe the request or action before saving."; $("formErr").hidden=false; return; }
-    const row={ id:state.editing||"", action, from:$("f_from").value, to:$("f_to").value, responsible:$("f_resp").value.trim(),
+    const cur=state.editing ? state.rows[state.tab].find(x=>x.id===state.editing) : null;
+    const row={ no: cur ? cur.no : "", action, from:$("f_from").value, to:$("f_to").value, responsible:$("f_resp").value.trim(),
       issued:$("f_issued").value, due:$("f_due").value, status:$("f_status").value, remarks:$("f_remarks").value.trim() };
     $("saveBtn").disabled=true; $("saveBtn").textContent="Saving…"; state.busy=true;
     try{
@@ -294,7 +324,8 @@
   async function del(){
     state.busy=true; $("delYes").disabled=true;
     try{
-      const j=await apiPost({op:"delete",reg:state.tab,id:state.editing,passcode:state.passcode,by:state.name});
+      const cur=state.rows[state.tab].find(x=>x.id===state.editing);
+      const j=await apiPost({op:"delete",reg:state.tab,no:cur?cur.no:"",passcode:state.passcode,by:state.name});
       if (!j.ok){ $("formErr").textContent=handleWriteError(j); $("formErr").hidden=false; return; }
       applyData(j.data); state.busy=false; closeDrawer(); toast("Action deleted");
     }catch(err){ $("formErr").textContent="Couldn't delete this action. Try again."; $("formErr").hidden=false; }
@@ -323,7 +354,7 @@
   function rowOpen(e){ const el=e.target.closest("[data-id]"); if(!el) return; const r=state.rows[state.tab].find(x=>x.id===el.dataset.id); if(r) openDrawer(r); }
   $("tbody").addEventListener("click",rowOpen); $("cards").addEventListener("click",rowOpen);
   [$("tbody"),$("cards")].forEach(el=>el.addEventListener("keydown",e=>{ if(e.key==="Enter") rowOpen(e); }));
-  $("addBtn").addEventListener("click",()=>{ window.open(SHEET_URL,"_blank","noopener"); });
+  $("addBtn").addEventListener("click",()=>{ if (API_URL) openDrawer(null); else window.open(SHEET_URL,"_blank","noopener"); });
   $("exportBtn").addEventListener("click",exportCsv);
   $("lockBtn").addEventListener("click",openUnlock);
   $("uForm").addEventListener("submit",doUnlock);

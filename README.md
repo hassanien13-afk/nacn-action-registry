@@ -10,7 +10,7 @@ Live action & request tracking register shared between:
 
 Two registers: **DrasChem – EPC-E – COSMOS-E** and **DrasChem – COSMOS-E**.
 
-- The portal reads the registry live from a Google Sheet (two tabs, one per register) and refreshes every 30 seconds.
-- Add and edit actions in the Google Sheet (**Add / edit in Google Sheet** button). Keep the column order: No. | Request / Action | Date Issued | From | To | Responsible | Due Date | Status | Remarks.
-- Anyone with the link can view and download CSV.
-- The Google Sheet ID is set in `config.js`.
+- Anyone with the link can view the registry and download CSV.
+- Team members add, edit and delete actions in the portal after **Unlock editing** with the team passcode. Each change records who made it and when.
+- Data is stored in a Google Sheet (one tab per register) through a Google Apps Script web app owned by the registry administrator.
+- `config.js` holds the Google Sheet ID and the web app URL.
