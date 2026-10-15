@@ -120,7 +120,17 @@
     if (!SHEET_ID && !API_URL) return;
     if (state.busy) return;
     try{
-      if (API_URL){ applyData(await apiGet()); }
+      if (API_URL){
+        try { applyData(await apiGet()); }
+        catch(err){ // keep the register visible even if the save service is unreachable
+          if (!SHEET_ID) throw err;
+          const [t1,t2]=await Promise.all(REGS.map(R=>gviz(R.sheet)));
+          state.rows.tri=parseTable(REGS[0],t1); state.rows.duo=parseTable(REGS[1],t2);
+          state.loaded=true; state.lastSync=new Date(); state.error="Showing the sheet directly; saving is temporarily unavailable.";
+          console.warn("Apps Script unreachable:",err);
+          if ($("drawer").hidden) render(); renderLive(); return;
+        }
+      }
       else {
         const [t1,t2]=await Promise.all(REGS.map(R=>gviz(R.sheet)));
         state.rows.tri=parseTable(REGS[0],t1); state.rows.duo=parseTable(REGS[1],t2);
