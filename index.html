@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DrasChem NaCN Production Facility – Action Registry</title>
+<meta name="description" content="Action and request tracking register for the DrasChem NaCN Production Facility: DrasChem, EPC-E and COSMOS-E.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2313303b'/%3E%3Cpath d='M9 16l5 5 9-10' stroke='%234fb3c9' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: document-control register — steel header band with project title block, party tabs, KPI strip, dense sortable table (cards on phones), edit drawer on the right */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --surface-2:#eef1f3; --line:#d8dee2; --line-strong:#b9c3c9;
+  --ink:#16232b; --ink-2:#4a5a63; --ink-3:#77878f;
+  --band:#13303b; --band-ink:#e8f0f2; --band-ink-2:#9fb6bd;
+  --accent:#0f6f86; --accent-ink:#ffffff; --accent-soft:#dcecf0;
+  --p-dras:#7a4bb3; --p-dras-bg:#efe7f8;
+  --p-epc:#b35f12; --p-epc-bg:#fbeedd;
+  --p-cos:#0f6f86; --p-cos-bg:#dcecf0;
+  --ok:#2c7a46; --ok-bg:#e1f1e6; --warn:#a46600; --warn-bg:#fbefd7; --bad:#b4322a; --bad-bg:#f8e1df; --idle:#5d6b73; --idle-bg:#e7ebee;
+  --shadow:0 1px 2px rgba(19,48,59,.06),0 8px 24px rgba(19,48,59,.08);
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e171c; --surface:#142128; --surface-2:#1a2a32; --line:#263943; --line-strong:#36505c;
+  --ink:#e3ecef; --ink-2:#a9bbc2; --ink-3:#7c9099;
+  --band:#0a2029; --band-ink:#e3ecef; --band-ink-2:#8eabb4;
+  --accent:#4fb3c9; --accent-ink:#06222a; --accent-soft:#16343d;
+  --p-dras:#c4a2ef; --p-dras-bg:#2a2140; --p-epc:#efab68; --p-epc-bg:#3a2a17; --p-cos:#6fc6d9; --p-cos-bg:#14343d;
+  --ok:#74c991; --ok-bg:#163020; --warn:#e5b257; --warn-bg:#352a12; --bad:#f08a80; --bad-bg:#3c1b19; --idle:#a3b2b9; --idle-bg:#22313a;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35); color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0e171c; --surface:#142128; --surface-2:#1a2a32; --line:#263943; --line-strong:#36505c;
+  --ink:#e3ecef; --ink-2:#a9bbc2; --ink-3:#7c9099;
+  --band:#0a2029; --band-ink:#e3ecef; --band-ink-2:#8eabb4;
+  --accent:#4fb3c9; --accent-ink:#06222a; --accent-soft:#16343d;
+  --p-dras:#c4a2ef; --p-dras-bg:#2a2140; --p-epc:#efab68; --p-epc-bg:#3a2a17; --p-cos:#6fc6d9; --p-cos-bg:#14343d;
+  --ok:#74c991; --ok-bg:#163020; --warn:#e5b257; --warn-bg:#352a12; --bad:#f08a80; --bad-bg:#3c1b19; --idle:#a3b2b9; --idle-bg:#22313a;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35); color-scheme:dark;}
+
+*{box-sizing:border-box}
+html{color-scheme:light}
+[hidden]{display:none!important}
+body{margin:0;-webkit-text-size-adjust:100%}
+.dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 32px));background:var(--surface);border-radius:10px;box-shadow:var(--shadow);z-index:21;border:1px solid var(--line)}
+.dialog .dbody{gap:14px}
+.hint{font-size:12.5px;color:var(--ink-3);margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Header band */
+.band{background:var(--band);color:var(--band-ink)}
+.band .wrap{padding-block:22px 0}
+.titleblock{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--band-ink-2)}
+h1{font-family:var(--f-display);font-stretch:80%;font-weight:750;font-size:clamp(26px,4vw,38px);line-height:1.05;margin:6px 0 0;letter-spacing:-.005em;text-wrap:balance}
+h1 span{color:var(--band-ink-2);font-weight:550}
+.meta{display:grid;grid-template-columns:repeat(3,auto);gap:0;border:1px solid rgba(159,182,189,.28);border-radius:6px;overflow:hidden}
+.meta div{padding:8px 14px;border-left:1px solid rgba(159,182,189,.28);min-width:0}
+.meta div:first-child{border-left:0}
+.meta dt{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--band-ink-2)}
+.meta dd{margin:2px 0 0;font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.tabs{display:flex;gap:4px;margin-top:22px;overflow-x:auto;scrollbar-width:none}
+.tab{appearance:none;border:0;background:transparent;color:var(--band-ink-2);padding:12px 16px 13px;border-radius:8px 8px 0 0;cursor:pointer;display:flex;align-items:center;gap:10px;white-space:nowrap;font-weight:600;font-size:14px}
+.tab:hover{color:var(--band-ink)}
+.tab[aria-selected="true"]{background:var(--bg);color:var(--ink)}
+.tab .parties{display:flex;gap:3px}
+.tab .parties i{width:9px;height:9px;border-radius:2px;display:block}
+.tab .count{font-family:var(--f-mono);font-size:11.5px;padding:1px 7px;border-radius:999px;background:rgba(159,182,189,.18)}
+.tab[aria-selected="true"] .count{background:var(--surface-2);color:var(--ink-2)}
+
+/* Party colors */
+.pc-DrasChem{--pc:var(--p-dras);--pcb:var(--p-dras-bg)}
+.pc-EPC-E{--pc:var(--p-epc);--pcb:var(--p-epc-bg)}
+.pc-COSMOS-E{--pc:var(--p-cos);--pcb:var(--p-cos-bg)}
+.party{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 8px 2px 6px;border-radius:4px;background:var(--pcb,var(--surface-2));color:var(--pc,var(--ink-2));white-space:nowrap}
+.party::before{content:"";width:6px;height:6px;border-radius:1px;background:currentColor}
+
+.site-foot{border-top:1px solid var(--line);margin-top:8px;padding-top:14px}
+main .wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
+
+/* KPI strip */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,2fr);background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.kpi{padding:14px 16px;border-left:1px solid var(--line);min-width:0;appearance:none;border-top:0;border-right:0;border-bottom:0;background:transparent;text-align:left;cursor:pointer}
+.kpi:first-child{border-left:0}
+.kpi:hover{background:var(--surface-2)}
+.kpi[aria-pressed="true"]{background:var(--accent-soft)}
+.kpi .k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.kpi .v{font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:28px;line-height:1.1;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi.bad .v{color:var(--bad)} .kpi.warn .v{color:var(--warn)} .kpi.ok .v{color:var(--ok)}
+.mix{padding:14px 16px;border-left:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0}
+.bar{display:flex;height:10px;border-radius:3px;overflow:hidden;background:var(--surface-2)}
+.bar span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink-2)}
+.legend b{font-family:var(--f-mono);font-weight:500;color:var(--ink)}
+
+/* Toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.search{flex:1 1 260px;position:relative;min-width:0}
+.search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button{appearance:none;border:0;background:transparent;padding:8px 12px;cursor:pointer;font-size:13px;color:var(--ink-2);border-left:1px solid var(--line);white-space:nowrap}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+select.f{padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-size:13px}
+.btn{appearance:none;border:1px solid var(--line-strong);background:var(--surface);padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.spacer{flex:1}
+
+/* Table */
+.tablecard{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:1080px}
+thead th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-family:var(--f-mono);font-weight:500;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+thead th.sortable{cursor:pointer;user-select:none}
+thead th.sortable:hover{color:var(--ink)}
+thead th .arr{opacity:.35;margin-left:3px}
+thead th[aria-sort] .arr{opacity:1;color:var(--accent)}
+tbody td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr.is-overdue td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
+tbody tr.is-done{color:var(--ink-2)}
+.no{font-family:var(--f-mono);font-size:12.5px;color:var(--ink-3);white-space:nowrap}
+.act{max-width:460px;min-width:260px;white-space:pre-line}
+.date{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13px}
+.due-note{display:block;font-family:var(--f-mono);font-size:11px;margin-top:2px}
+.due-note.bad{color:var(--bad)} .due-note.warn{color:var(--warn)} .due-note.muted{color:var(--ink-3)}
+.route{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.route .arrow{color:var(--ink-3);font-size:12px}
+.resp{font-weight:500;white-space:nowrap}
+.remarks{max-width:300px;min-width:160px;color:var(--ink-2);font-size:13px;white-space:pre-line}
+.remarks.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.st-complete{background:var(--ok-bg);color:var(--ok)}
+.st-progress{background:var(--warn-bg);color:var(--warn)}
+.st-hold{background:var(--accent-soft);color:var(--accent)}
+.st-notstarted{background:var(--idle-bg);color:var(--idle)}
+.st-overdue{background:var(--bad-bg);color:var(--bad)}
+.empty{padding:48px 20px;text-align:center;color:var(--ink-2)}
+.empty h3{font-family:var(--f-display);font-stretch:85%;font-size:20px;margin:0 0 6px;color:var(--ink)}
+
+/* Mobile cards */
+.cards{display:none}
+@media (max-width:760px){
+  .tscroll{display:none}
+  .cards{display:flex;flex-direction:column}
+  .card{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px;cursor:pointer}
+  .card:last-child{border-bottom:0}
+  .card.is-overdue{box-shadow:inset 3px 0 0 var(--bad)}
+  .card-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .card-row{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--ink-2)}
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kpi:nth-child(4){border-left:0}
+  .kpi:nth-child(n+4){border-top:1px solid var(--line)}
+  .mix{grid-column:1/-1;border-left:0;border-top:1px solid var(--line)}
+  .meta{grid-template-columns:1fr 1fr}
+  .tab-sfx{display:none}
+  .tab{padding:10px 12px 11px;gap:8px;font-size:13px}
+  .meta div:nth-child(3){grid-column:1/-1;border-left:0;border-top:1px solid rgba(159,182,189,.28)}
+}
+
+/* Drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,24,30,.42);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--surface);z-index:21;box-shadow:var(--shadow);display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.dhead{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.dhead h2{font-family:var(--f-display);font-stretch:85%;font-size:22px;margin:2px 0 0}
+.x{appearance:none;border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:var(--ink-3);padding:4px 6px;border-radius:4px}
+.x:hover{background:var(--surface-2);color:var(--ink)}
+.dbody{padding:18px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface)}
+.field textarea{resize:vertical;min-height:90px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media (max-width:480px){.grid3{grid-template-columns:1fr 1fr}.grid3 .field:last-child{grid-column:1/-1}}
+.audit{font-size:12px;color:var(--ink-3);display:flex;align-items:center;gap:8px}
+.audit img{width:20px;height:20px;border-radius:50%}
+.dfoot{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.confirm{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--bad);flex-wrap:wrap}
+.err{color:var(--bad);font-size:13px}
+
+/* Toast + notices */
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:6px;font-size:13px;z-index:30;box-shadow:var(--shadow)}
+.notice{background:var(--warn-bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13px}
+.foot{font-size:12px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:6px 18px}
+@media (prefers-reduced-motion:no-preference){
+  .drawer{animation:slide .18s ease-out}
+  @keyframes slide{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}}
+}
+</style>
+</head>
+<body>
+
+
+<header class="band">
+  <div class="wrap">
+    <div class="titleblock">
+      <div>
+        <div class="eyebrow">Action &amp; Request Tracking Register</div>
+        <h1>DrasChem NaCN Production Facility <span>/ Action Registry</span></h1>
+      </div>
+      <dl class="meta">
+        <div><dt>Client</dt><dd><i class="dot" style="background:var(--p-dras)"></i>DrasChem</dd></div>
+        <div><dt>Process Engineer</dt><dd><i class="dot" style="background:var(--p-epc)"></i>EPC-E</dd></div>
+        <div><dt>Detailed Design</dt><dd><i class="dot" style="background:var(--p-cos)"></i>COSMOS-E</dd></div>
+      </dl>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs"></nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div id="notice" class="notice" hidden></div>
+
+    <section class="kpis" id="kpis" aria-label="Register summary"></section>
+
+    <div class="toolbar">
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input id="q" type="search" placeholder="Search actions, remarks, responsible…" aria-label="Search">
+      </div>
+      <div class="seg" id="statusSeg" role="group" aria-label="Status filter"></div>
+      <select class="f" id="partyFilter" aria-label="Party filter"></select>
+      <span class="spacer"></span>
+      <button class="btn" id="lockBtn" type="button" hidden></button>
+      <button class="btn" id="exportBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0l-3-3m3 3l3-3M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Export CSV</button>
+      <button class="btn primary" id="addBtn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>New action</button>
+    </div>
+
+    <section class="tablecard">
+      <div class="tscroll">
+        <table>
+          <thead><tr id="thead"></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="empty" id="empty" hidden></div>
+    </section>
+
+    <div class="foot">
+      <span id="liveState">Connecting to the registry…</span>
+      <span>Overdue = due date passed and status not Complete.</span>
+      <span>Click any row to view it. Editing needs the team passcode.</span>
+    </div>
+  </div>
+</main>
+
+<div id="scrim" class="scrim" hidden></div>
+<aside id="drawer" class="drawer" hidden role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <form id="form" style="display:contents" novalidate>
+    <div class="dhead">
+      <div>
+        <div class="eyebrow" id="dEyebrow" style="color:var(--ink-3)"></div>
+        <h2 id="dTitle">New action</h2>
+      </div>
+      <button type="button" class="x" id="closeBtn" aria-label="Close">×</button>
+    </div>
+    <div class="dbody">
+      <div class="field"><label for="f_action">Request / Action</label><textarea id="f_action" required rows="4"></textarea></div>
+      <div class="grid3">
+        <div class="field"><label for="f_from">From</label><select id="f_from"></select></div>
+        <div class="field"><label for="f_to">To</label><select id="f_to"></select></div>
+        <div class="field"><label for="f_resp">Responsible</label><input id="f_resp" list="respList" autocomplete="off"><datalist id="respList"></datalist></div>
+      </div>
+      <div class="grid3">
+        <div class="field"><label for="f_issued">Date issued</label><input id="f_issued" type="date"></div>
+        <div class="field"><label for="f_due">Due date</label><input id="f_due" type="date"></div>
+        <div class="field"><label for="f_status">Status</label><select id="f_status"></select></div>
+      </div>
+      <div class="field"><label for="f_remarks">Remarks</label><textarea id="f_remarks" rows="4"></textarea></div>
+      <div class="audit" id="audit" hidden></div>
+      <p class="hint" id="roNote" hidden>View only. Use <b>Unlock editing</b> with the team passcode to change this action.</p>
+      <div class="err" id="formErr" hidden></div>
+    </div>
+    <div class="dfoot">
+      <button type="submit" class="btn primary" id="saveBtn">Save action</button>
+      <button type="button" class="btn" id="cancelBtn">Cancel</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn danger" id="delBtn" hidden>Delete</button>
+      <div class="confirm" id="delConfirm" hidden>Delete this action for everyone?
+        <button type="button" class="btn danger" id="delYes">Delete</button>
+        <button type="button" class="btn" id="delNo">Keep</button>
+      </div>
+    </div>
+  </form>
+</aside>
+<div id="toast" class="toast" hidden></div>
+
+
+<div id="uScrim" class="scrim" hidden></div>
+<div id="unlock" class="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="uTitle">
+  <div class="dhead"><div><div class="eyebrow" style="color:var(--ink-3)">DrasChem NaCN Production Facility</div><h2 id="uTitle">Unlock editing</h2></div>
+    <button type="button" class="x" id="uClose" aria-label="Close">×</button></div>
+  <form id="uForm" novalidate>
+    <div class="dbody">
+      <div class="field"><label for="u_name">Your name</label><input id="u_name" autocomplete="name" placeholder="e.g. Andrey (DrasChem)"></div>
+      <div class="field"><label for="u_pass">Team passcode</label><input id="u_pass" type="password" autocomplete="current-password"></div>
+      <p class="hint">Your name is recorded on the actions you add or change. This device remembers you until you lock it again.</p>
+      <div class="err" id="uErr" hidden></div>
+    </div>
+    <div class="dfoot"><button class="btn primary" id="uGo" type="submit">Unlock</button></div>
+  </form>
+  <div id="uSigned" hidden>
+    <div class="dbody"><p id="uSignedText" style="margin:0"></p></div>
+    <div class="dfoot"><button class="btn" id="uClose2" type="button">Done</button><span class="spacer"></span><button class="btn danger" id="uLock" type="button">Lock editing on this device</button></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
