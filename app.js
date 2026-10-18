@@ -124,7 +124,16 @@
     return res.json();
   }
   function fromApi(R,list){
-    return (list||[]).map(r=>({ ...r, id:R.key+"-"+r.no, status:normStatus(r.status), from:normParty(r.from), to:normParty(r.to) })).filter(r=>r.action);
+    return (list||[]).map(r=>({ ...r, id:R.key+"-"+r.no, issued:normDate(r.issued), due:normDate(r.due), status:normStatus(r.status), from:normParty(r.from), to:normParty(r.to) })).filter(r=>r.action);
+  }
+  // Accept any date shape the save service may send back (ISO, dd/mm/yyyy, 18-Oct-2026, or a full date string).
+  function normDate(v){
+    if (!v) return "";
+    const s=String(v).trim(); if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const p=parseDMY(s); if (p) return p;
+    const k=s.match(/([A-Z][a-z]{2}) (\d{1,2}) (\d{4})/);
+    if (k){ const m=MON.indexOf(k[1])+1; if (m) return k[3]+"-"+String(m).padStart(2,"0")+"-"+String(k[2]).padStart(2,"0"); }
+    const d=new Date(s); return isNaN(d) ? "" : d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
   }
   function applyData(d){
     state.rows.tri=fromApi(REGS[0],d.tri); state.rows.duo=fromApi(REGS[1],d.duo);
