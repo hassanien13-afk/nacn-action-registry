@@ -312,6 +312,7 @@
       return "The team passcode has changed. Unlock editing again with the new passcode."; }
     if (j && j.error==="action_required") return "Describe the request or action before saving.";
     if (j && j.error==="bad_date") return "Dates must be complete (day, month and year).";
+    if (j && j.error) return "The registry couldn't save this (" + String(j.error).slice(0,140) + "). Tell the registry administrator.";
     return "Couldn't save right now. Check your connection and try again.";
   }
 
