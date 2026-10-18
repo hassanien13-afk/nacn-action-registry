@@ -32,6 +32,20 @@
 
   function todayISO(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function fmtDate(iso){ if(!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso||""; const [y,m,d]=iso.split("-"); return d+" "+MON[+m-1]+" "+y; }
+  // Dates are typed as dd/mm/yyyy (local convention) regardless of browser language.
+  function toDMY(iso){ if(!iso||!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return ""; const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; }
+  function parseDMY(s){
+    s=String(s||"").trim(); if(!s) return "";
+    let d,m,y,k;
+    if ((k=s.match(/^(\d{1,2})[\/.\-\s](\d{1,2})[\/.\-\s](\d{2}|\d{4})$/))) { d=+k[1]; m=+k[2]; y=+k[3]; }
+    else if ((k=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) { y=+k[1]; m=+k[2]; d=+k[3]; }
+    else if ((k=s.match(/^(\d{1,2})[\s\-\/]*([A-Za-z]{3})[A-Za-z]*[\s\-\/,]*(\d{2}|\d{4})$/))) { d=+k[1]; m=MON.findIndex(x=>x.toLowerCase()===k[2].toLowerCase())+1; y=+k[3]; }
+    else return null;
+    if (y<100) y+=2000;
+    const t=new Date(Date.UTC(y,m-1,d));
+    if (!m || t.getUTCFullYear()!==y || t.getUTCMonth()!==m-1 || t.getUTCDate()!==d) return null;
+    return y+"-"+String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+  }
   function daysBetween(a,b){ return Math.round((Date.parse(b+"T00:00:00Z")-Date.parse(a+"T00:00:00Z"))/86400000); }
   function isOverdue(r){ return r.status!=="Complete" && r.due && r.due < todayISO(); }
   function partyChip(p){ return p ? `<span class="party pc-${esc(p)}">${esc(p)}</span>` : `<span style="color:var(--ink-3)">—</span>`; }
@@ -283,13 +297,14 @@
     $("f_resp").value=row?.responsible||"";
     const resp=R.parties; // companies only; any name can still be typed
     $("respList").innerHTML=resp.map(x=>`<option value="${esc(x)}">`).join("");
-    $("f_issued").value=row?.issued||todayISO();
-    $("f_due").value=row?.due||"";
+    $("f_issued").value=toDMY(row?.issued||todayISO());
+    $("f_due").value=toDMY(row?.due||"");
     fillSelect($("f_status"),STATUSES,row?.status||"Not Started");
     $("f_remarks").value=row?.remarks||"";
     const ro=!canEdit();
     $("delBtn").hidden=!row || ro; $("delConfirm").hidden=true; $("formErr").hidden=true;
     ["f_action","f_from","f_to","f_resp","f_issued","f_due","f_status","f_remarks"].forEach(i=>$(i).disabled=ro);
+    document.querySelectorAll(".calbtn").forEach(b=>b.disabled=ro);
     $("saveBtn").hidden=ro;
     $("roNote").hidden = API_URL ? !ro : false;
     if (API_URL) $("roNote").innerHTML = `View only. Use <b>Unlock editing</b> with the team passcode to change this action.`;
@@ -321,9 +336,14 @@
     if (!canEdit()) return;
     const action=$("f_action").value.trim();
     if (!action){ $("formErr").textContent="Describe the request or action before saving."; $("formErr").hidden=false; return; }
+    const issued=parseDMY($("f_issued").value), due=parseDMY($("f_due").value);
+    if (issued===null || due===null){
+      $("formErr").textContent=`Enter ${issued===null?"Date issued":"Due date"} as day/month/year, for example 26/10/2026, or pick it from the calendar.`;
+      $("formErr").hidden=false; (issued===null?$("f_issued"):$("f_due")).focus(); return;
+    }
     const cur=state.editing ? state.rows[state.tab].find(x=>x.id===state.editing) : null;
     const row={ no: cur ? cur.no : "", action, from:$("f_from").value, to:$("f_to").value, responsible:$("f_resp").value.trim(),
-      issued:$("f_issued").value, due:$("f_due").value, status:$("f_status").value, remarks:$("f_remarks").value.trim() };
+      issued, due, status:$("f_status").value, remarks:$("f_remarks").value.trim() };
     $("saveBtn").disabled=true; $("saveBtn").textContent="Saving…"; state.busy=true;
     try{
       const j=await apiPost({op:"save",reg:state.tab,row,passcode:state.passcode,by:state.name});
@@ -374,6 +394,15 @@
   $("closeBtn").addEventListener("click",closeDrawer); $("cancelBtn").addEventListener("click",closeDrawer); $("scrim").addEventListener("click",closeDrawer);
   document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("drawer").hidden) closeDrawer(); else if(!$("unlock").hidden) closeUnlock(); });
   $("form").addEventListener("submit",save);
+  document.querySelectorAll(".calbtn").forEach(btn=>{
+    const txt=$(btn.dataset.for), pick=$(btn.dataset.for+"_pick");
+    btn.addEventListener("click",()=>{
+      pick.value=parseDMY(txt.value)||"";
+      try { pick.showPicker(); } catch(e){ pick.style.pointerEvents="auto"; pick.focus(); pick.click(); pick.style.pointerEvents=""; }
+    });
+    pick.addEventListener("change",()=>{ if(pick.value){ txt.value=toDMY(pick.value); $("formErr").hidden=true; } });
+    txt.addEventListener("blur",()=>{ const v=parseDMY(txt.value); if (v) txt.value=toDMY(v); });
+  });
   $("delBtn").addEventListener("click",()=>{ $("delBtn").hidden=true; $("delConfirm").hidden=false; });
   $("delNo").addEventListener("click",()=>{ $("delBtn").hidden=false; $("delConfirm").hidden=true; });
   $("delYes").addEventListener("click",del);

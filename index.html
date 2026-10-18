@@ -49,6 +49,12 @@ html{color-scheme:light}
 body{margin:0;-webkit-text-size-adjust:100%}
 .dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 32px));background:var(--surface);border-radius:10px;box-shadow:var(--shadow);z-index:21;border:1px solid var(--line)}
 .dialog .dbody{gap:14px}
+.datefield{position:relative}
+.datefield input[type=text]{padding-right:38px}
+.calbtn{position:absolute;right:4px;top:50%;transform:translateY(-50%);appearance:none;border:0;background:transparent;color:var(--ink-3);padding:6px;border-radius:4px;cursor:pointer;display:flex}
+.calbtn:hover{color:var(--accent);background:var(--surface-2)}
+.calbtn[disabled]{display:none}
+.dpick{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
 .hint{font-size:12.5px;color:var(--ink-3);margin:0}
 .hint a{color:var(--accent);font-weight:600}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
@@ -286,8 +292,8 @@ tbody tr.is-done{color:var(--ink-2)}
         <div class="field"><label for="f_resp">Responsible</label><input id="f_resp" list="respList" autocomplete="off" placeholder="Pick a company or type a name"><datalist id="respList"></datalist></div>
       </div>
       <div class="grid3">
-        <div class="field"><label for="f_issued">Date issued</label><input id="f_issued" type="date"></div>
-        <div class="field"><label for="f_due">Due date</label><input id="f_due" type="date"></div>
+        <div class="field"><label for="f_issued">Date issued</label><div class="datefield"><input id="f_issued" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" autocomplete="off"><button type="button" class="calbtn" data-for="f_issued" aria-label="Pick date issued from calendar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button><input type="date" class="dpick" id="f_issued_pick" tabindex="-1" aria-hidden="true"></div></div>
+        <div class="field"><label for="f_due">Due date</label><div class="datefield"><input id="f_due" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" autocomplete="off"><button type="button" class="calbtn" data-for="f_due" aria-label="Pick due date from calendar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button><input type="date" class="dpick" id="f_due_pick" tabindex="-1" aria-hidden="true"></div></div>
         <div class="field"><label for="f_status">Status</label><select id="f_status"></select></div>
       </div>
       <div class="field"><label for="f_remarks">Remarks</label><textarea id="f_remarks" rows="4"></textarea></div>
