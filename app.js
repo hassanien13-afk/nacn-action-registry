@@ -304,7 +304,7 @@
     const ro=!canEdit();
     $("delBtn").hidden=!row || ro; $("delConfirm").hidden=true; $("formErr").hidden=true;
     ["f_action","f_from","f_to","f_resp","f_issued","f_due","f_status","f_remarks"].forEach(i=>$(i).disabled=ro);
-    document.querySelectorAll(".calbtn").forEach(b=>b.disabled=ro);
+    document.querySelectorAll(".calbtn").forEach(b=>{ b.disabled=ro; $(b.dataset.for+"_pick").disabled=ro; });
     $("saveBtn").hidden=ro;
     $("roNote").hidden = API_URL ? !ro : false;
     if (API_URL) $("roNote").innerHTML = `View only. Use <b>Unlock editing</b> with the team passcode to change this action.`;
@@ -396,11 +396,12 @@
   $("form").addEventListener("submit",save);
   document.querySelectorAll(".calbtn").forEach(btn=>{
     const txt=$(btn.dataset.for), pick=$(btn.dataset.for+"_pick");
-    btn.addEventListener("click",()=>{
-      pick.value=parseDMY(txt.value)||"";
-      try { pick.showPicker(); } catch(e){ pick.style.pointerEvents="auto"; pick.focus(); pick.click(); pick.style.pointerEvents=""; }
-    });
+    const sync=()=>{ pick.value=parseDMY(txt.value)||""; };
+    pick.addEventListener("pointerdown",sync);
+    pick.addEventListener("keydown",sync);
+    pick.addEventListener("click",()=>{ sync(); try { pick.showPicker(); } catch(e){} });
     pick.addEventListener("change",()=>{ if(pick.value){ txt.value=toDMY(pick.value); $("formErr").hidden=true; } });
+    pick.addEventListener("input",()=>{ if(pick.value) txt.value=toDMY(pick.value); });
     txt.addEventListener("blur",()=>{ const v=parseDMY(txt.value); if (v) txt.value=toDMY(v); });
   });
   $("delBtn").addEventListener("click",()=>{ $("delBtn").hidden=true; $("delConfirm").hidden=false; });
