@@ -52,13 +52,21 @@ body{margin:0;-webkit-text-size-adjust:100%}
 .datefield{position:relative}
 .datefield input[type=text]{padding-right:38px}
 .calbtn{position:absolute;right:4px;top:50%;transform:translateY(-50%);appearance:none;border:0;background:transparent;color:var(--ink-3);padding:6px;border-radius:4px;cursor:pointer;display:flex}
-.calbtn{pointer-events:none}
-.datefield:hover .calbtn{color:var(--accent);background:var(--surface-2)}
-.calbtn[disabled]{display:none}
-/* the real (invisible) date input sits on top of the icon, so a tap opens the native calendar on every browser */
-.dpick{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:32px;height:32px;margin:0;padding:0;border:0;opacity:0;cursor:pointer;z-index:2;color-scheme:inherit}
-.dpick::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;cursor:pointer}
-.dpick:disabled{display:none}
+.cal{position:absolute;z-index:30;top:calc(100% + 6px);left:0;width:264px;background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;box-shadow:var(--shadow);padding:10px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-head b{font-size:13.5px}
+.cal-nav{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:4px;width:30px;height:28px;cursor:pointer;font-size:15px;line-height:1}
+.cal-nav:hover{background:var(--surface-2)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal-grid .dow{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-3);padding:4px 0}
+.cal-day{appearance:none;border:0;background:transparent;border-radius:4px;padding:6px 0;cursor:pointer;font-size:13px;font-variant-numeric:tabular-nums}
+.cal-day:hover{background:var(--accent-soft)}
+.cal-day.today{box-shadow:inset 0 0 0 1px var(--accent)}
+.cal-day.sel{background:var(--accent);color:var(--accent-ink)}
+.cal-foot{display:flex;justify-content:space-between;margin-top:8px}
+.cal-foot button{appearance:none;border:0;background:transparent;color:var(--accent);font-weight:600;font-size:12.5px;cursor:pointer;padding:4px 6px;border-radius:4px}
+.cal-foot button:hover{background:var(--surface-2)}
+.grid3 .field:nth-child(2) .cal{left:auto;right:0}
 .hint{font-size:12.5px;color:var(--ink-3);margin:0}
 .hint a{color:var(--accent);font-weight:600}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
@@ -296,8 +304,8 @@ tbody tr.is-done{color:var(--ink-2)}
         <div class="field"><label for="f_resp">Responsible</label><input id="f_resp" list="respList" autocomplete="off" placeholder="Pick a company or type a name"><datalist id="respList"></datalist></div>
       </div>
       <div class="grid3">
-        <div class="field"><label for="f_issued">Date issued</label><div class="datefield"><input id="f_issued" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" autocomplete="off"><button type="button" class="calbtn" data-for="f_issued" aria-label="Pick date issued from calendar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button><input type="date" class="dpick" id="f_issued_pick" tabindex="-1" aria-hidden="true"></div></div>
-        <div class="field"><label for="f_due">Due date</label><div class="datefield"><input id="f_due" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" autocomplete="off"><button type="button" class="calbtn" data-for="f_due" aria-label="Pick due date from calendar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button><input type="date" class="dpick" id="f_due_pick" tabindex="-1" aria-hidden="true"></div></div>
+        <div class="field"><label for="f_issued">Date issued</label><div class="datefield"><input id="f_issued" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" autocomplete="off"><button type="button" class="calbtn" data-for="f_issued" aria-label="Pick date issued from calendar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button></div></div>
+        <div class="field"><label for="f_due">Due date</label><div class="datefield"><input id="f_due" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" autocomplete="off"><button type="button" class="calbtn" data-for="f_due" aria-label="Pick due date from calendar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button></div></div>
         <div class="field"><label for="f_status">Status</label><select id="f_status"></select></div>
       </div>
       <div class="field"><label for="f_remarks">Remarks</label><textarea id="f_remarks" rows="4"></textarea></div>
@@ -339,7 +347,7 @@ tbody tr.is-done{color:var(--ink-2)}
   </div>
 </div>
 
-<script src="config.js"></script>
-<script src="app.js"></script>
+<script src="config.js?v=7"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>

@@ -304,7 +304,7 @@
     const ro=!canEdit();
     $("delBtn").hidden=!row || ro; $("delConfirm").hidden=true; $("formErr").hidden=true;
     ["f_action","f_from","f_to","f_resp","f_issued","f_due","f_status","f_remarks"].forEach(i=>$(i).disabled=ro);
-    document.querySelectorAll(".calbtn").forEach(b=>{ b.disabled=ro; $(b.dataset.for+"_pick").disabled=ro; });
+    document.querySelectorAll(".calbtn").forEach(b=>{ b.disabled=ro; });
     $("saveBtn").hidden=ro;
     $("roNote").hidden = API_URL ? !ro : false;
     if (API_URL) $("roNote").innerHTML = `View only. Use <b>Unlock editing</b> with the team passcode to change this action.`;
@@ -320,7 +320,7 @@
     $("scrim").hidden=false; $("drawer").hidden=false;
     setTimeout(()=>(ro?$("closeBtn"):$("f_action")).focus(),30);
   }
-  function closeDrawer(){ $("scrim").hidden=true; $("drawer").hidden=true; state.editing=null; render(); }
+  function closeDrawer(){ closeCal(); $("scrim").hidden=true; $("drawer").hidden=true; state.editing=null; render(); }
   function toast(msg){ const t=$("toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,2600); }
   function handleWriteError(j){
     if (j && j.error==="bad_passcode"){ state.passcode=null; ls.set("nacn.pass",null); render();
@@ -394,16 +394,49 @@
   $("closeBtn").addEventListener("click",closeDrawer); $("cancelBtn").addEventListener("click",closeDrawer); $("scrim").addEventListener("click",closeDrawer);
   document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("drawer").hidden) closeDrawer(); else if(!$("unlock").hidden) closeUnlock(); });
   $("form").addEventListener("submit",save);
+  /* ---------- built-in calendar (same in every browser) ---------- */
+  let calEl=null;
+  function closeCal(){ if(calEl){ calEl.remove(); calEl=null; } }
+  function openCal(btn){
+    const txt=$(btn.dataset.for);
+    if (calEl && calEl.dataset.for===btn.dataset.for){ closeCal(); return; }
+    closeCal();
+    const sel=parseDMY(txt.value)||"", base=sel||todayISO();
+    let y=+base.slice(0,4), m=+base.slice(5,7)-1;
+    calEl=document.createElement("div"); calEl.className="cal"; calEl.dataset.for=btn.dataset.for;
+    calEl.setAttribute("role","dialog"); calEl.setAttribute("aria-label","Choose date");
+    const draw=()=>{
+      const first=new Date(Date.UTC(y,m,1)), start=(first.getUTCDay()+6)%7, days=new Date(Date.UTC(y,m+1,0)).getUTCDate();
+      let cells="";
+      for(let i=0;i<start;i++) cells+="<span></span>";
+      for(let d=1;d<=days;d++){
+        const iso=y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+        cells+=`<button type="button" class="cal-day${iso===sel?" sel":""}${iso===todayISO()?" today":""}" data-iso="${iso}">${d}</button>`;
+      }
+      calEl.innerHTML=`<div class="cal-head"><button type="button" class="cal-nav" data-nav="-1" aria-label="Previous month">‹</button><b>${["January","February","March","April","May","June","July","August","September","October","November","December"][m]} ${y}</b><button type="button" class="cal-nav" data-nav="1" aria-label="Next month">›</button></div>
+        <div class="cal-grid">${["Mo","Tu","We","Th","Fr","Sa","Su"].map(x=>`<span class="dow">${x}</span>`).join("")}${cells}</div>
+        <div class="cal-foot"><button type="button" data-act="today">Today</button><button type="button" data-act="clear">Clear</button></div>`;
+    };
+    draw();
+    calEl.addEventListener("mousedown",ev=>ev.preventDefault()); // keep focus, avoid blur closing
+    calEl.addEventListener("click",ev=>{
+      ev.stopPropagation();
+      const b=ev.target.closest("button"); if(!b) return;
+      if (b.dataset.nav){ m+=+b.dataset.nav; if(m<0){m=11;y--;} if(m>11){m=0;y++;} draw(); return; }
+      if (b.dataset.iso){ txt.value=toDMY(b.dataset.iso); }
+      else if (b.dataset.act==="today"){ txt.value=toDMY(todayISO()); }
+      else if (b.dataset.act==="clear"){ txt.value=""; }
+      $("formErr").hidden=true; closeCal(); txt.focus();
+    });
+    btn.parentElement.appendChild(calEl);
+  }
   document.querySelectorAll(".calbtn").forEach(btn=>{
-    const txt=$(btn.dataset.for), pick=$(btn.dataset.for+"_pick");
-    const sync=()=>{ pick.value=parseDMY(txt.value)||""; };
-    pick.addEventListener("pointerdown",sync);
-    pick.addEventListener("keydown",sync);
-    pick.addEventListener("click",()=>{ sync(); try { pick.showPicker(); } catch(e){} });
-    pick.addEventListener("change",()=>{ if(pick.value){ txt.value=toDMY(pick.value); $("formErr").hidden=true; } });
-    pick.addEventListener("input",()=>{ if(pick.value) txt.value=toDMY(pick.value); });
+    const txt=$(btn.dataset.for);
+    btn.addEventListener("click",ev=>{ ev.stopPropagation(); openCal(btn); });
     txt.addEventListener("blur",()=>{ const v=parseDMY(txt.value); if (v) txt.value=toDMY(v); });
   });
+  document.addEventListener("click",ev=>{ if (calEl && !calEl.contains(ev.target)) closeCal(); });
+  document.addEventListener("keydown",ev=>{ if (ev.key==="Escape" && calEl){ ev.stopPropagation(); closeCal(); } }, true);
   $("delBtn").addEventListener("click",()=>{ $("delBtn").hidden=true; $("delConfirm").hidden=false; });
   $("delNo").addEventListener("click",()=>{ $("delBtn").hidden=false; $("delConfirm").hidden=true; });
   $("delYes").addEventListener("click",del);
