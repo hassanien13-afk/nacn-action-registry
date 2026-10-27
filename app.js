@@ -173,7 +173,7 @@
       if (state.status==="week"){ if(r.status==="Complete"||!r.due) return false; const n=daysBetween(todayISO(),r.due); if(n<0||n>7) return false; }
       if (state.status==="complete" && r.status!=="Complete") return false;
       if (state.party!=="all"){ const p=state.party; if (r.from!==p && r.to!==p && !(r.responsible||"").toLowerCase().includes(p.toLowerCase().replace("-e",""))) return false; }
-      if (q){ const hay=[code(r),r.action,r.remarks,r.responsible,r.from,r.to,r.status].join(" ").toLowerCase(); if(!hay.includes(q)) return false; }
+      if (q){ const hay=[code(r),r.action,r.remarks,r.responsible,r.from,r.to,r.status,r.createdBy].join(" ").toLowerCase(); if(!hay.includes(q)) return false; }
       return true;
     });
     const {key,dir}=state.sort, m=dir==="asc"?1:-1;
@@ -214,7 +214,7 @@
       ? `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015-.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Editing as ${esc(state.name||"team member")}`
       : `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" stroke-width="1.5"/></svg>Unlock editing`;
   }
-  const COLS=[["no","No.",1],["action","Request / Action",0],["issued","Issued",1],["route","From → To",0],["responsible","Responsible",1],["due","Due",1],["status","Status",1],["remarks","Remarks",0]];
+  const COLS=[["no","No.",1],["action","Request / Action",0],["issued","Issued",1],["route","From → To",0],["responsible","Responsible",1],["due","Due",1],["status","Status",1],["createdBy","Created By",1],["remarks","Remarks",0]];
   function renderHead(){
     $("thead").innerHTML = COLS.map(([k,l,s])=>{
       const on=state.sort.key===k;
@@ -239,13 +239,14 @@
         <td class="resp">${esc(r.responsible||"—")}</td>
         <td>${dueCell(r)}</td>
         <td>${statusPill(r)}</td>
+        <td class="creator">${r.createdBy?esc(r.createdBy):'<span style="color:var(--ink-3)">—</span>'}</td>
         <td><div class="remarks clamp">${esc(r.remarks||"")}</div></td></tr>`;
     }).join("");
     $("cards").innerHTML = rows.map(r=>`<div class="card ${isOverdue(r)?"is-overdue":""}" data-id="${esc(r.id)}" tabindex="0">
         <div class="card-top"><span class="no">${code(r)}</span>${statusPill(r)}</div>
         <div class="act" style="min-width:0;max-width:none">${esc(r.action)}</div>
         <div class="route">${partyChip(r.from)}<span class="arrow">→</span>${partyChip(r.to)}</div>
-        <div class="card-row"><span>Resp: <b style="color:var(--ink)">${esc(r.responsible||"—")}</b></span><span>Issued ${fmtDate(r.issued)||"—"}</span><span>Due ${r.due?fmtDate(r.due):"not set"}</span></div>
+        <div class="card-row"><span>Resp: <b style="color:var(--ink)">${esc(r.responsible||"—")}</b></span><span>Issued ${fmtDate(r.issued)||"—"}</span><span>Due ${r.due?fmtDate(r.due):"not set"}</span>${r.createdBy?`<span>By <b style="color:var(--ink)">${esc(r.createdBy)}</b></span>`:""}</div>
         ${r.remarks?`<div class="remarks clamp" style="max-width:none">${esc(r.remarks)}</div>`:""}
       </div>`).join("");
   }
@@ -324,7 +325,7 @@
     if (row && row.updatedAt){
       a.hidden=false;
       const when=new Date(row.updatedAt); const w=isNaN(when)?row.updatedAt:when.toLocaleString([], {dateStyle:"medium",timeStyle:"short"});
-      a.textContent=`Last updated ${row.updatedBy?"by "+row.updatedBy+" · ":""}${w}`;
+      a.textContent=`${row.createdBy?"Created by "+row.createdBy+" · ":""}Last updated ${row.updatedBy?"by "+row.updatedBy+" · ":""}${w}`;
     } else a.hidden=true;
     $("scrim").hidden=false; $("drawer").hidden=false;
     setTimeout(()=>(ro?$("closeBtn"):$("f_action")).focus(),30);
@@ -375,8 +376,8 @@
   /* ---------- CSV export ---------- */
   function exportCsv(){
     const R=reg(), rows=filtered(); const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
-    const lines=[["No.","Request / Action","Date Issued","From","To","Responsible","Due Date","Status","Overdue","Remarks","Last Updated","Updated By"].map(q).join(",")]
-      .concat(rows.map(r=>[codeFor(R,r),r.action,r.issued,r.from,r.to,r.responsible,r.due,r.status,isOverdue(r)?"Yes":"",r.remarks,r.updatedAt,r.updatedBy].map(q).join(",")));
+    const lines=[["No.","Request / Action","Date Issued","From","To","Responsible","Due Date","Status","Overdue","Remarks","Created By","Last Updated","Updated By"].map(q).join(",")]
+      .concat(rows.map(r=>[codeFor(R,r),r.action,r.issued,r.from,r.to,r.responsible,r.due,r.status,isOverdue(r)?"Yes":"",r.remarks,r.createdBy,r.updatedAt,r.updatedBy].map(q).join(",")));
     const blob=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
     const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
     a.download=`DrasChem_NaCN_Production_Facility_${R.short}_Action_Registry_${todayISO()}.csv`;
